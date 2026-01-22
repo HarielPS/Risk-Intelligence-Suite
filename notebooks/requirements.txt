@@ -1,0 +1,11 @@
+# Kernel / notebooks
+ipykernel
+jupyter
+notebook
+
+# Visualización
+matplotlib
+seaborn
+
+# Dominio ML (instalar librería local)
+-e ../ml-credit

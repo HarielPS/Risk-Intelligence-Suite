@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  credit-api:
+    build:
+      context: .
+      dockerfile: services/credit-api/Dockerfile
+    container_name: credit-api
+    ports:
+      - "8000:8000"
+    environment:
+      # Evita buffering de logs de Python
+      - PYTHONUNBUFFERED=1
+      # Aqui irian variables de entorno adicionales, por ejemplo:
+      # - ENV=production
+    volumes:
+      # Montamos modelos y artefactos en solo lectura
+      - ./ml-credit/models:/app/ml-credit/models:ro
+      - ./ml-credit/artifacts:/app/ml-credit/artifacts:ro
+    restart: unless-stopped
+    networks:
+      - risk-net
+
+# Si en el futuro agregas otra API (por ejemplo anomaly-api),
+# la puedes declarar aquí:
+#
+#  anomaly-api:
+#    build:
+#      context: .
+#      dockerfile: services/anomaly-api/Dockerfile
+#    container_name: anomaly-api
+#    ports:
+#      - "8001:8000"
+#    networks:
+#      - risk-net
+
+networks:
+  risk-net:
+    driver: bridge
