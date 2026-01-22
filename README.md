@@ -2,6 +2,7 @@
 
 ## Organizacion carpetas
 
+```text
 risk-intelligence-suite/
 ├── README.md
 ├── docker-compose.yml          # Opcional pero muy bueno para la demo
@@ -126,6 +127,7 @@ risk-intelligence-suite/
     │   └── globals.css
     ├── tailwind.config.js
     └── tsconfig.json
+```
 
 ## Data
 
@@ -158,6 +160,5 @@ cd services/credit-api
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 <!-- Modo Docker / Compose -->
-
 cd Risk-Intelligence-Suite
-docker compose up --build credit-api
+docker compose up --build

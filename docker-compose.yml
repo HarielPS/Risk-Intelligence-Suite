@@ -20,19 +20,39 @@ services:
     restart: unless-stopped
     networks:
       - risk-net
+  
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: risk-backend
+    env_file:
+      - ./infra/.env
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongo:27017/risk-intelligence
+      - ML_CREDIT_URL=http://credit-api:8000/score
+    depends_on:
+      - mongo
+      - credit-api
+    ports:
+      - "5000:5000"
+    networks:
+      - risk-net
+  
+  mongo:
+    image: mongo:6
+    container_name: risk-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - risk-net
 
-# Si en el futuro agregas otra API (por ejemplo anomaly-api),
-# la puedes declarar aquí:
-#
-#  anomaly-api:
-#    build:
-#      context: .
-#      dockerfile: services/anomaly-api/Dockerfile
-#    container_name: anomaly-api
-#    ports:
-#      - "8001:8000"
-#    networks:
-#      - risk-net
+volumes:
+  mongo-data:
 
 networks:
   risk-net:
