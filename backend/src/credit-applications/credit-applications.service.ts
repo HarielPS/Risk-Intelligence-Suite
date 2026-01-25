@@ -346,90 +346,88 @@ export class CreditApplicationsService {
   }
 
   async generateLetterForApplication(
-    applicationId: string,
-    userId: string,
-  ): Promise<CreditLetter> {
-    const app = await this.creditAppModel
-      .findOne({ _id: applicationId, user: userId })
-      .exec();
+  applicationId: string,
+  userId: string,
+): Promise<CreditLetter> {
+  // 1) Buscar la solicitud solo por ID
+  const app = await this.creditAppModel
+    .findById(applicationId)
+    .exec();
 
-    if (!app) {
-      throw new NotFoundException('Solicitud de crédito no encontrada');
-    }
-
-    const user = await this.userModel.findById(userId).exec();
-    if (!user) {
-      throw new NotFoundException('Usuario no encontrado');
-    }
-
-    const payload = this.buildLetterPayload(app, user);
-
-    // TODO: aquí en el futuro llamaremos al microservicio ml-letter
-    // const resp = await this.http.post(ML_LETTER_URL, payload) ...
-    // const mlLetter: CreditLetter = resp.data;
-
-    // Por ahora devolvemos una carta stub generada por plantilla,
-    // para que el frontend ya la pueda consumir.
-    const lines: string[] = [];
-
-    lines.push(
-      `Estimado/a ${payload.customerProfile.firstName ?? 'cliente'},`,
-    );
-    lines.push('');
-    lines.push(
-      `Hemos analizado tu solicitud de crédito por ${payload.creditSummary.amount} unidades monetarias a ${payload.creditSummary.durationMonths} meses.`,
-    );
-
-    if (payload.decision === 'APPROVE') {
-      lines.push(
-        'Nos complace informarte que, con base en la evaluación de tu perfil y la política de riesgo vigente, tu solicitud cumple con los criterios para ser aprobada.',
-      );
-    } else if (payload.decision === 'REVIEW') {
-      lines.push(
-        'Tu solicitud requiere una revisión adicional por parte de nuestro equipo antes de tomar una decisión definitiva.',
-      );
-    } else {
-      lines.push(
-        'En este momento tu solicitud no cumple con los criterios necesarios para ser aprobada.',
-      );
-    }
-
-    lines.push('');
-    lines.push('Principales factores considerados:');
-
-    const bullets: string[] = [];
-    for (const r of payload.reasons.slice(0, 3)) {
-      bullets.push(`• ${r.title}: ${r.evidence}`);
-    }
-
-    lines.push(...bullets);
-    lines.push('');
-    lines.push(
-      'Te recomendamos considerar los puntos anteriores antes de presentar una nueva solicitud o ajustar el monto y plazo del crédito.',
-    );
-    lines.push('');
-    lines.push(
-      'Esta explicación es informativa y no constituye un compromiso de aprobación futura. La decisión final siempre depende de la revisión integral de tu perfil y de la política de riesgo vigente.',
-    );
-    lines.push('');
-    lines.push('Atentamente,');
-    lines.push('Equipo de Riesgo Inbursa');
-
-    const letterText = lines.join('\n');
-
-    const letter: CreditLetter = {
-      decision: payload.decision,
-      letterText,
-      bullets: bullets,
-      safetyFlags: [], // en el futuro, banderas de contenido del LLM
-    };
-
-    // TODO: opcional: guarda la carta en la solicitud:
-    // app.explainabilityLetter = letter;
-    // await app.save();
-
-    return letter;
+  if (!app) {
+    throw new NotFoundException('Solicitud de crédito no encontrada');
   }
+
+  console.log('App response:', app, 'Requested user:', userId);
+
+  // 2) Buscar el usuario por ID (para nombre, edad, etc.)
+  const user = await this.userModel.findById(userId).exec();
+  if (!user) {
+    throw new NotFoundException('Usuario no encontrado');
+  }
+
+  const payload = this.buildLetterPayload(app, user);
+
+  console.log('Generated letter payload:', payload);
+
+  // --- STUB de carta por plantilla (igual que ya tenías) ---
+
+  const lines: string[] = [];
+
+  lines.push(
+    `Estimado/a ${payload.customerProfile.firstName ?? 'cliente'},`,
+  );
+  lines.push('');
+  lines.push(
+    `Hemos analizado tu solicitud de crédito por ${payload.creditSummary.amount} unidades monetarias a ${payload.creditSummary.durationMonths} meses.`,
+  );
+
+  if (payload.decision === 'APPROVE') {
+    lines.push(
+      'Nos complace informarte que, con base en la evaluación de tu perfil y la política de riesgo vigente, tu solicitud cumple con los criterios para ser aprobada.',
+    );
+  } else if (payload.decision === 'REVIEW') {
+    lines.push(
+      'Tu solicitud requiere una revisión adicional por parte de nuestro equipo antes de tomar una decisión definitiva.',
+    );
+  } else {
+    lines.push(
+      'En este momento tu solicitud no cumple con los criterios necesarios para ser aprobada.',
+    );
+  }
+
+  lines.push('');
+  lines.push('Principales factores considerados:');
+
+  const bullets: string[] = [];
+  for (const r of payload.reasons.slice(0, 3)) {
+    bullets.push(`• ${r.title}: ${r.evidence}`);
+  }
+
+  lines.push(...bullets);
+  lines.push('');
+  lines.push(
+    'Te recomendamos considerar los puntos anteriores antes de presentar una nueva solicitud o ajustar el monto y plazo del crédito.',
+  );
+  lines.push('');
+  lines.push(
+    'Esta explicación es informativa y no constituye un compromiso de aprobación futura. La decisión final siempre depende de la revisión integral de tu perfil y de la política de riesgo vigente.',
+  );
+  lines.push('');
+  lines.push('Atentamente,');
+  lines.push('Equipo de Riesgo Inbursa');
+
+  const letterText = lines.join('\n');
+
+  const letter: CreditLetter = {
+    decision: payload.decision,
+    letterText,
+    bullets,
+    safetyFlags: [],
+  };
+
+  return letter;
+}
 
 
 

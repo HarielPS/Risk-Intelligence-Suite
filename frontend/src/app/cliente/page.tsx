@@ -2,17 +2,31 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
+// autenticacion y proteccion de ruta
 import { getStoredUser } from "@/lib/auth/storage";
 import type { AuthUser } from "@/lib/types/auth";
+
+// Dto y funciones de endpoint
+import type {
+  CreditApplicationResponse,
+  CreateCreditApplicationDto,
+  CreditApplicationResult
+} from "@/lib/types/creditApplications";
+
+// createCreditApplication y resultado de solicitud
 import { CreditApplicationForm } from "@/app/components/cliente/CreditApplicationForm";
 import { CreditResultPanel } from "@/app/components/cliente/CreditResultPanel";
 import {
   createCreditApplication,
 } from "@/lib/api/creditApplications";
-import type {
-  CreditApplicationResponse,
-  CreateCreditApplicationDto,
-} from "@/lib/types/creditApplications";
+
+
+// creacion y resultado de letter
+import { generateCreditLetter } from "@/lib/api/creditLetters";
+import type { CreditLetter } from "@/lib/types/creditLetters";
+import { LetterResultPanel } from "../components/cliente/LetterResultPanel";
+
 
 export default function ClientePage() {
   const router = useRouter();
@@ -21,7 +35,10 @@ export default function ClientePage() {
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // estados para resultado de solicitud y carta
   const [result, setResult] = useState<CreditApplicationResponse | null>(null);
+  const [letter, setLetter] = useState<CreditLetter | null>(null);
 
   useEffect(() => {
     const stored = getStoredUser();
@@ -39,10 +56,20 @@ export default function ClientePage() {
     if (!user) return;
     setErrorMsg(null);
     setLoading(true);
+    setLetter(null);
 
     try {
       const response = await createCreditApplication(user.id, formValues);
       setResult(response);
+      
+      
+      // 2.2 Generar carta de explicabilidad
+      try{
+        const letterResponse = await generateCreditLetter(user.id, response.id);
+        setLetter(letterResponse);
+      }catch(err){
+        console.error("Error al generar carta de explicabilidad:", err);
+      }
     } catch (err: any) {
       console.error("Error al crear solicitud de crédito:", err);
       setErrorMsg(
@@ -121,6 +148,7 @@ export default function ClientePage() {
               Resultado del modelo
             </h2>
             <CreditResultPanel result={result} />
+            <LetterResultPanel letter={letter} />
           </section>
         </div>
       </div>
