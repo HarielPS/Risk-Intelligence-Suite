@@ -1,0 +1,149 @@
+@import "tailwindcss";
+/* @tailwind base;
+@tailwind components; */
+@tailwind utilities;
+
+/* =====================
+   Tokens Tailwind 4
+===================== */
+@theme {
+  /* Base */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  /* Brand */
+  --color-primary: hsl(var(--primary));
+  --color-primary-hover: hsl(var(--primary-hover));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-hover: hsl(var(--secondary-hover));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  /* Focus */
+  --color-focus: hsl(var(--focus));
+  --color-focus-hover: hsl(var(--focus-hover));
+  --color-focus-hover-2: hsl(var(--focus-hover-2));
+
+  /* UI neutrals */
+  --color-muted: hsl(var(--muted));
+  --color-muted-hover: hsl(var(--muted-hover));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-ring: hsl(var(--ring));
+
+  /* Alerts */
+  --color-success: hsl(var(--success));
+  --color-success-hover: hsl(var(--success-hover));
+
+  --color-warning: hsl(var(--warning));
+  --color-warning-hover: hsl(var(--warning-hover));
+
+  --color-danger: hsl(var(--danger));
+  --color-danger-hover: hsl(var(--danger-hover));
+}
+
+/* =====================
+   Variables HSL (Light)
+===================== */
+:root {
+  /* Base */
+  --background: 0 0% 100%;
+  --foreground: 235 25% 15%;
+
+  /* Brand */
+  --primary: 251 56% 22%;          /* Azul Inbursa */
+  --primary-hover: 251 56% 55.9%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 240 20% 96%;
+  --secondary-hover: 240 20% 90%;
+  --secondary-foreground: 235 25% 15%;
+
+  /* UI Neutrals */
+  --muted: 240 10% 95%;
+  --muted-hover: 240 10% 90%;
+  --muted-foreground: 240 5% 45%;
+
+  --focus: 219 100% 57.6%;
+  --focus-hover: 247 100% 29.7%;
+  --focus-hover-2:219 100% 68.3%;
+
+  --border: 240 10% 90%;
+  --ring: 251 56% 22%;
+
+  /* Alerts */
+  --success: 142 70% 35%;
+  --success-hover: 142 70% 30%;
+
+  --warning: 38 95% 50%;
+  --warning-hover: 38 95% 45%;
+
+  --danger: 0 75% 55%;
+  --danger-hover: 0 75% 48%;
+}
+
+/* =====================
+   Dark mode
+===================== */
+.dark {
+  --background: 240 30% 10%;
+  --foreground: 0 0% 98%;
+
+  --primary: 251 85% 60%;             /* #6242f0 */ 
+  --primary-hover: 251 85% 54%;      /* #4b26ed */
+  --primary-foreground: 240 30% 10%; /* #121221 */
+
+  --secondary: 240 20% 18%;
+  --secondary-hover: 240 20% 24%;
+  --secondary-foreground: 0 0% 98%;
+
+  --muted: 240 20% 18%;
+  --muted-hover: 240 20% 24%;
+  --muted-foreground: 240 10% 70%;
+
+  --focus: 219 100% 57.6%;
+  --focus-hover: 247 100% 29.7%;
+  --focus-hover-2:219 100% 68.3%;
+
+  --border: 240 20% 18%;
+  --ring: 251 85% 60%;
+
+  --success: 142 65% 45%;
+  --success-hover: 142 65% 40%;
+
+  --warning: 38 90% 55%;
+  --warning-hover: 38 90% 48%;
+
+  --danger: 0 75% 60%;
+  --danger-hover: 0 75% 52%;
+}
+
+/* =====================
+   Base styles
+===================== */
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* =====================
+   Swiper custom styles
+===================== */
+
+/* Botones de navegación del Swiper */
+/* .swiper-button-next,
+.swiper-button-prev {
+  @apply w-10 h-10 rounded-full bg-primary text-primary-foreground shadow-md flex items-center justify-center;
+}
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 14px;
+  font-weight: 700;
+} */

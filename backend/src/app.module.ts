@@ -4,6 +4,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ClientsModule } from './clients/clients.module';
 import { AppController } from './app.controller';
 import { RiskModule } from './risk/risk.module';
+import { AuthModule } from './auth/auth.module';
+import { AccountsModule } from './accounts/accounts.module';
+import { CreditApplicationsModule } from './credit-applications/credit-applications.module';
 
 @Module({
   imports: [
@@ -29,6 +32,9 @@ import { RiskModule } from './risk/risk.module';
 
     ClientsModule,
     RiskModule,
+    AuthModule,
+    AccountsModule,
+    CreditApplicationsModule,
   ],
   controllers: [AppController],
   providers: [],
