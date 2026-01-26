@@ -44,6 +44,7 @@ ml-credit/models/
 ml-credit/artifacts/
 ml-text/models/
 ml-anomaly/models/
+ml-letter/models/
 
 ####################################
 # Logs & outputs

@@ -7,6 +7,7 @@ import {
   IsBoolean,
   IsOptional,
   IsIn,
+  IsNumber,
 } from "class-validator";
 
 export class RegisterUserDto {
@@ -46,4 +47,18 @@ export class RegisterUserDto {
   @IsOptional()
   @IsBoolean()
   marketingOptIn?: boolean;
+
+  //  Campos nuevos para crear el Client
+
+  @IsOptional()          
+  @IsString()
+  nationalId?: string;   
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsNumber()
+  income?: number;        
 }

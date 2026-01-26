@@ -1,8 +1,5 @@
-# services/credit-api/Dockerfile
-
 FROM python:3.10-slim
 
-# Evitar bytecode y buffering en logs
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 

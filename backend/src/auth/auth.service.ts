@@ -11,6 +11,9 @@ import { User, UserDocument, UserRole } from "./schemas/user.schema";
 import { Account, AccountDocument } from "../accounts/schemas/account.schema";
 import { RegisterUserDto } from "./dto/register-user.dto";
 import { LoginDto } from "./dto/login.dto";
+import { ClientsService } from "../clients/clients.service";
+import { CreateClientDto } from "../clients/dto/create-client.dto";
+
 
 @Injectable()
 export class AuthService {
@@ -19,6 +22,7 @@ export class AuthService {
     private readonly userModel: Model<UserDocument>,
     @InjectModel(Account.name)
     private readonly accountModel: Model<AccountDocument>,
+    private readonly clientsService: ClientsService,
   ) {}
 
   async register(dto: RegisterUserDto) {
@@ -50,12 +54,23 @@ export class AuthService {
 
     await account.save();
 
+    const clientPayload: CreateClientDto = {
+      name: `${dto.firstName} ${dto.lastName}`,
+      nationalId: dto.nationalId ?? 'PENDIENTE',
+      email: dto.email,
+      phone: dto.phone,
+      income: dto.income ?? 0,
+    };
+    const client = await this.clientsService.create(clientPayload);
+
+
     return {
       id: savedUser._id,
       email: savedUser.email,
       role: savedUser.role,
       firstName: savedUser.firstName,
       lastName: savedUser.lastName,
+      clientId: client._id,
     };
   }
 

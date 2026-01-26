@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+pydantic
+
+# LLM local
+llama-cpp-python
+
+# RAG sobre PDF
+pymupdf
+sentence-transformers
+numpy
+torch

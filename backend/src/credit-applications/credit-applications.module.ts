@@ -9,6 +9,7 @@ import {
 } from "./schemas/credit-application.schema";
 import { User, UserSchema } from "../auth/schemas/user.schema";
 import { Account, AccountSchema } from "../accounts/schemas/account.schema";
+import { Client, ClientSchema } from "../clients/schemas/client.schema";
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { Account, AccountSchema } from "../accounts/schemas/account.schema";
       { name: CreditApplication.name, schema: CreditApplicationSchema },
       { name: User.name, schema: UserSchema },
       { name: Account.name, schema: AccountSchema },
+      { name: Client.name, schema: ClientSchema },
     ]),
   ],
   controllers: [CreditApplicationsController],

@@ -3,40 +3,31 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-// autenticacion y proteccion de ruta
 import { getStoredUser } from "@/lib/auth/storage";
 import type { AuthUser } from "@/lib/types/auth";
 
-// Dto y funciones de endpoint
 import type {
   CreditApplicationResponse,
   CreateCreditApplicationDto,
-  CreditApplicationResult
 } from "@/lib/types/creditApplications";
 
-// createCreditApplication y resultado de solicitud
 import { CreditApplicationForm } from "@/app/components/cliente/CreditApplicationForm";
 import { CreditResultPanel } from "@/app/components/cliente/CreditResultPanel";
-import {
-  createCreditApplication,
-} from "@/lib/api/creditApplications";
+import { createCreditApplication } from "@/lib/api/creditApplications";
 
-
-// creacion y resultado de letter
 import { generateCreditLetter } from "@/lib/api/creditLetters";
 import type { CreditLetter } from "@/lib/types/creditLetters";
 import { LetterResultPanel } from "../components/cliente/LetterResultPanel";
-
 
 export default function ClientePage() {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [checkedAuth, setCheckedAuth] = useState(false);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);            // loading general (form)
+  const [letterLoading, setLetterLoading] = useState(false); // loading específico carta
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // estados para resultado de solicitud y carta
   const [result, setResult] = useState<CreditApplicationResponse | null>(null);
   const [letter, setLetter] = useState<CreditLetter | null>(null);
 
@@ -57,18 +48,26 @@ export default function ClientePage() {
     setErrorMsg(null);
     setLoading(true);
     setLetter(null);
+    setLetterLoading(false);
 
     try {
+      // 1) Crear solicitud de crédito (rápido)
       const response = await createCreditApplication(user.id, formValues);
       setResult(response);
-      
-      
-      // 2.2 Generar carta de explicabilidad
-      try{
+
+      // 2) Generar carta de explicabilidad (tarda más)
+      try {
+        setLetterLoading(true);
         const letterResponse = await generateCreditLetter(user.id, response.id);
         setLetter(letterResponse);
-      }catch(err){
+      } catch (err) {
         console.error("Error al generar carta de explicabilidad:", err);
+        // Si quieres diferenciar errores de carta del resto, podrías usar otro estado
+        setErrorMsg(
+          "La solicitud se procesó, pero hubo un error al generar la carta de explicabilidad."
+        );
+      } finally {
+        setLetterLoading(false);
       }
     } catch (err: any) {
       console.error("Error al crear solicitud de crédito:", err);
@@ -100,9 +99,7 @@ export default function ClientePage() {
 
   return (
     <main className="min-h-screen bg-slate-50">
-
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-        
         <header className="mb-2">
           <h1 className="text-2xl font-semibold text-slate-900">
             Hola, {fullName} 👋
@@ -148,11 +145,10 @@ export default function ClientePage() {
               Resultado del modelo
             </h2>
             <CreditResultPanel result={result} />
-            <LetterResultPanel letter={letter} />
+            <LetterResultPanel letter={letter} loading={letterLoading} />
           </section>
         </div>
       </div>
-
     </main>
   );
 }

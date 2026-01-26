@@ -1,0 +1,20 @@
+
+
+
+
+[project]
+name = "ml-letter"
+version = "0.1.0"
+description = "Microservicio para generación de cartas usando LLM local"
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "llama-cpp-python", 
+    "python-dotenv",
+    "pymupdf",
+    "sentence-transformers"
+]

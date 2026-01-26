@@ -19,7 +19,7 @@ export class ClientsService {
     private readonly clientModel: Model<ClientDocument>,
   ) {}
 
-  async create(dto: CreateClientDto): Promise<Client> {
+  async create(dto: CreateClientDto): Promise<ClientDocument> {
     try {
       const created = new this.clientModel(dto);
       return await created.save();
@@ -33,11 +33,11 @@ export class ClientsService {
     }
   }
 
-  async findAll(): Promise<Client[]> {
+  async findAll(): Promise<ClientDocument[]> {
     return this.clientModel.find().exec();
   }
 
-  async findOne(id: string): Promise<Client> {
+  async findOne(id: string): Promise<ClientDocument> {
     const client = await this.clientModel.findById(id).exec();
     if (!client) {
       throw new NotFoundException('Client not found');
@@ -45,7 +45,7 @@ export class ClientsService {
     return client;
   }
 
-  async update(id: string, dto: UpdateClientDto): Promise<Client> {
+  async update(id: string, dto: UpdateClientDto): Promise<ClientDocument> {
     try {
       const updated = await this.clientModel
         .findByIdAndUpdate(id, dto, { new: true })

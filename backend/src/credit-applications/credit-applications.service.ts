@@ -22,6 +22,9 @@ import {
   CreditLetterPayload,
   CreditLetter,
 } from "./types/explainability.types";
+import { MlLetterPayload } from "./types/ml-letter.types";
+import { Client, ClientDocument } from "../clients/schemas/client.schema";
+
 
 
 @Injectable()
@@ -37,6 +40,8 @@ export class CreditApplicationsService {
     private readonly accountModel: Model<AccountDocument>,
     private readonly http: HttpService,
     private readonly configService: ConfigService,
+    @InjectModel(Client.name)
+    private readonly clientModel: Model<ClientDocument>,
   ) {
     this.mlUrl = this.configService.get<string>("ML_CREDIT_URL") ?? "";
   }
@@ -200,6 +205,8 @@ export class CreditApplicationsService {
 
     const saved = await doc.save();
 
+    console.log("Saved credit application:", saved);
+
     return {
       id: saved._id,
       probabilityDefault,
@@ -225,210 +232,148 @@ export class CreditApplicationsService {
 
 // ---------------- Letter Ml helpers services ------------------------------------------
 
-  private inferDecisionFromRisk(
-    riskBand: 'LOW' | 'MEDIUM' | 'HIGH',
-    probabilityDefault: number,
-  ): ExplainabilityDecision {
-    if (riskBand === 'LOW' && probabilityDefault < 0.25) {
-      return 'APPROVE';
-    }
-    if (riskBand === 'MEDIUM' || (riskBand === 'LOW' && probabilityDefault >= 0.25)) {
-      return 'REVIEW';
-    }
-    return 'DECLINE';
-  }
-
-  private buildReasonsFromApplication(
-    app: CreditApplicationDocument,
-  ): RiskReason[] {
-    const reasons: RiskReason[] = [];
-
-    // 1) Ejemplo: compromiso de ingresos alto
-    if (app.installmentRate >= 3) {
-      reasons.push({
-        code: 'HIGH_DEBT_BURDEN',
-        title: 'Alto compromiso de ingresos',
-        evidence:
-          'La cuota del crédito representa una proporción elevada de tus ingresos estimados.',
-        customerTip:
-          'Considera reducir tus deudas de corto plazo o solicitar un monto menor para mejorar tu perfil.',
-        weight: 0.9,
-      });
-    }
-
-    // 2) Ejemplo: ahorro bajo 
-    if ((app as any).sparkont && (app as any).sparkont <= 2) {
-      reasons.push({
-        code: 'LOW_SAVINGS',
-        title: 'Ahorro disponible limitado',
-        evidence:
-          'Tu nivel de ahorro registrado es reducido en relación con el monto solicitado.',
-        customerTip:
-          'Incrementar tu ahorro mensual y mantener un saldo estable puede mejorar tu perfil de riesgo.',
-        weight: 0.7,
-      });
-    }
-
-    // 3) Ejemplo: historial crediticio débil
-    if (app.creditHistory <= 1) {
-      reasons.push({
-        code: 'WEAK_CREDIT_HISTORY',
-        title: 'Historial crediticio limitado o con incidencias',
-        evidence:
-          'Se detecta un historial crediticio limitado o con eventos críticos recientes.',
-        customerTip:
-          'Mantener tus pagos al día durante un periodo más largo ayudará a fortalecer tu historial.',
-        weight: 0.8,
-      });
-    }
-
-    // 4) Usar topFeatures del modelo 
-    if (Array.isArray(app.topFeatures) && app.topFeatures.length > 0) {
-      const top = app.topFeatures.slice(0, 3);
-      for (const f of top) {
-        reasons.push({
-          code: `MODEL_FEATURE_${String(f.feature).toUpperCase()}`,
-          title: `Factor del modelo: ${f.feature}`,
-          evidence: 'Este factor tuvo un impacto relevante en el cálculo del riesgo.',
-          customerTip:
-            'Revisa este aspecto de tu perfil (por ejemplo, monto solicitado, plazo o nivel de endeudamiento).',
-          weight: Math.abs(f.impact ?? 0),
-        });
-      }
-    }
-
-    if (reasons.length === 0) {
-      reasons.push({
-        code: 'GENERAL_RISK_PROFILE',
-        title: 'Perfil de riesgo del crédito',
-        evidence:
-          'La combinación de variables del crédito y tu información registrada sugiere un nivel de riesgo mayor al deseado.',
-        customerTip:
-          'Puedes revisar el monto, el plazo o tu nivel de endeudamiento para buscar una mejor combinación.',
-        weight: 0.5,
-      });
-    }
-    return reasons;
-  }
-
-  private buildLetterPayload(
-    app: CreditApplicationDocument,
-    user: UserDocument,
-  ): CreditLetterPayload {
-    const decision = this.inferDecisionFromRisk(
-      app.riskBand,
-      app.probabilityDefault,
-    );
-
-    const reasons = this.buildReasonsFromApplication(app);
-
-    const age = (app as any).age ?? this.computeAge(user.birthdate);
-
-    return {
-      locale: 'es-MX',
-      channel: 'WEB',
-      customerProfile: {
-        firstName: user.firstName,
-        lastName: user.lastName,
-        age,
-        segment: 'INDIVIDUAL',
-      },
-      creditSummary: {
-        amount: app.amount,
-        durationMonths: app.durationMonths,
-        probabilityDefault: app.probabilityDefault,
-        riskBand: app.riskBand,
-      },
-      decision,
-      reasons,
-      disclaimerLevel: 'STANDARD',
-    };
-  }
-
-  async generateLetterForApplication(
+async generateLetterForApplication(
   applicationId: string,
   userId: string,
 ): Promise<CreditLetter> {
-  // 1) Buscar la solicitud solo por ID
-  const app = await this.creditAppModel
-    .findById(applicationId)
-    .exec();
-
+  // 1) Buscar la solicitud por ID
+  const app = await this.creditAppModel.findById(applicationId).exec();
   if (!app) {
-    throw new NotFoundException('Solicitud de crédito no encontrada');
+    throw new NotFoundException("Solicitud de crédito no encontrada");
   }
 
-  console.log('App response:', app, 'Requested user:', userId);
-
-  // 2) Buscar el usuario por ID (para nombre, edad, etc.)
+  // 2) Buscar el usuario (para email, relación con client y cuenta)
   const user = await this.userModel.findById(userId).exec();
   if (!user) {
-    throw new NotFoundException('Usuario no encontrado');
+    throw new NotFoundException("Usuario no encontrado");
   }
 
-  const payload = this.buildLetterPayload(app, user);
+  // 3) Buscar la cuenta asociada (si quieres usar los saldos después)
+  const account = await this.accountModel
+    .findOne({ user: user._id })
+    .exec();
 
-  console.log('Generated letter payload:', payload);
-
-  // --- STUB de carta por plantilla (igual que ya tenías) ---
-
-  const lines: string[] = [];
-
-  lines.push(
-    `Estimado/a ${payload.customerProfile.firstName ?? 'cliente'},`,
-  );
-  lines.push('');
-  lines.push(
-    `Hemos analizado tu solicitud de crédito por ${payload.creditSummary.amount} unidades monetarias a ${payload.creditSummary.durationMonths} meses.`,
-  );
-
-  if (payload.decision === 'APPROVE') {
-    lines.push(
-      'Nos complace informarte que, con base en la evaluación de tu perfil y la política de riesgo vigente, tu solicitud cumple con los criterios para ser aprobada.',
-    );
-  } else if (payload.decision === 'REVIEW') {
-    lines.push(
-      'Tu solicitud requiere una revisión adicional por parte de nuestro equipo antes de tomar una decisión definitiva.',
-    );
-  } else {
-    lines.push(
-      'En este momento tu solicitud no cumple con los criterios necesarios para ser aprobada.',
-    );
+  if (!account) {
+    throw new NotFoundException("Cuenta asociada no encontrada");
   }
 
-  lines.push('');
-  lines.push('Principales factores considerados:');
+  // 4) Buscar el cliente (aquí está name, nationalId, email, phone, income, status)
+  const client = await this.clientModel
+    .findOne({ email: user.email })
+    .exec();
 
-  const bullets: string[] = [];
-  for (const r of payload.reasons.slice(0, 3)) {
-    bullets.push(`• ${r.title}: ${r.evidence}`);
+  if (!client) {
+    throw new NotFoundException("Cliente asociado no encontrado");
   }
 
-  lines.push(...bullets);
-  lines.push('');
-  lines.push(
-    'Te recomendamos considerar los puntos anteriores antes de presentar una nueva solicitud o ajustar el monto y plazo del crédito.',
-  );
-  lines.push('');
-  lines.push(
-    'Esta explicación es informativa y no constituye un compromiso de aprobación futura. La decisión final siempre depende de la revisión integral de tu perfil y de la política de riesgo vigente.',
-  );
-  lines.push('');
-  lines.push('Atentamente,');
-  lines.push('Equipo de Riesgo Inbursa');
-
-  const letterText = lines.join('\n');
-
-  const letter: CreditLetter = {
-    decision: payload.decision,
-    letterText,
-    bullets,
-    safetyFlags: [],
+  // 5) Armar el payload para el microservicio ml-letter
+  const mlLetterPayload: MlLetterPayload = {
+    application: {
+      id: app._id.toString(),
+      probabilityDefault: app.probabilityDefault,
+      riskBand: app.riskBand,
+      topFeatures: Array.isArray(app.topFeatures) ? app.topFeatures : [],
+      createdAt: app.createdAt,
+      amount: app.amount,
+      durationMonths: app.durationMonths,
+    },
+    customer: {
+      id: client._id.toString(),
+      name: client.name,
+      nationalId: client.nationalId,
+      email: client.email,
+      phone: client.phone ?? "",
+      income: client.income ?? 0,
+      status: client.status ?? "ACTIVE",
+      createdAt: client.createdAt,
+    },
+    // aquí luego puedes meter cosas del account si quieres
   };
 
-  return letter;
-}
+  console.log(
+    "ML Letter Payload:",
+    JSON.stringify(mlLetterPayload, null, 2),
+  );
 
+  // 6) URL del microservicio de cartas 
+  const mlLetterUrl =
+    this.configService.get<string>("ML_LETTER_URL") ?? "";
+
+  if (!mlLetterUrl) {
+    throw new InternalServerErrorException(
+      "ML_LETTER_URL no está configurado",
+    );
+  }
+
+  // Función auxiliar: hace la llamada HTTP real
+  const callLetterApi = async () => {
+    const resp$ = this.http.post(mlLetterUrl, mlLetterPayload);
+    return await firstValueFrom(resp$);
+  };
+
+  // 7) Llamar al microservicio ml-letter con pequeño retry
+  try {
+    let resp;
+
+    try {
+      resp = await callLetterApi();
+    } catch (err: any) {
+      // Si es un ECONNREFUSED (cold start), esperamos 2s y reintentamos una vez
+      const code = err?.code ?? err?.cause?.code;
+      if (code === "ECONNREFUSED") {
+        console.warn(
+          "Primer intento a letter-api falló con ECONNREFUSED, reintentando en 2s...",
+        );
+        await new Promise((r) => setTimeout(r, 2000));
+        resp = await callLetterApi();
+      } else {
+        throw err;
+      }
+    }
+
+    const raw = resp.data as any;
+    console.log("Respuesta de ml-letter:", JSON.stringify(raw, null, 2));
+
+    // 1) Si el microservicio ya manda bullets, los usamos.
+    //    Si no, construimos bullets a partir de positiveFactors / riskFactors
+    let bullets: string[] = [];
+
+    if (Array.isArray(raw.bullets) && raw.bullets.length > 0) {
+      bullets = raw.bullets;
+    } else {
+      (raw.positiveFactors ?? []).forEach((f: any) => {
+        bullets.push(
+          `Factor positivo: ${f.value_label} — ${f.impact_text}`,
+        );
+      });
+
+      (raw.riskFactors ?? []).forEach((f: any) => {
+        bullets.push(
+          `Factor de riesgo: ${f.value_label} — ${f.impact_text}`,
+        );
+      });
+    }
+
+    // 2) Preferimos letterText; si no viene, usamos reason; si tampoco, fallback
+    const letter: CreditLetter = {
+      decision: raw.decision as ExplainabilityDecision,
+      letterText:
+        raw.letterText ??
+        raw.reason ??
+        "No se pudo generar una explicación detallada.",
+      bullets,
+      safetyFlags: raw.safetyFlags ?? [],
+    };
+
+    return letter;
+
+  } catch (err) {
+    console.error("Error al llamar al microservicio de cartas:", err);
+    throw new InternalServerErrorException(
+      "Error al llamar al microservicio de cartas",
+    );
+  }
+}
 
 
 }
