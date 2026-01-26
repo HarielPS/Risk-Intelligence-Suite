@@ -36,7 +36,6 @@ data/processed/
 *.xlsx
 *.parquet
 
-
 ####################################
 # ML artifacts
 ####################################
@@ -58,12 +57,34 @@ logs/
 .ipynb_checkpoints/
 
 ####################################
-# Frontend (Node / Next.js)
+# Node / JS (frontend & backend)
 ####################################
 node_modules/
 .next/
 out/
 dist/
+build/
+
+####################################
+# Node / JS debug & diagnostics
+####################################
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.nyc_output/
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+####################################
+# Temp / runtime
+####################################
+.temp/
+.tmp/
+pids/
+*.pid
+*.pid.lock
+*.seed
 
 ####################################
 # Docker
