@@ -17,7 +17,7 @@ Desde la raíz del repositorio `Risk-Intelligence-Suite`:
 # Activar entorno virtual
 source .venv/bin/activate
 
-# Instalar el módulo de scoring
+# Instalar el moodulo de scoring
 pip install -e ./ml-credit
 
 # Instalar dependencias del servicio
@@ -69,13 +69,13 @@ cd Risk-Intelligence-Suite
 python -m venv .venv
 source .venv/bin/activate
 
-# 1. Instalar módulo de scoring
+# Instalar modulo de scoring
 pip install -e ./ml-credit
 
-# 2. Instalar dependencias del servicio FastAPI
+# Instalar dependencias del servicio FastAPI
 pip install -r services/credit-api/requirements.txt
 
-# 3. Levantar la API
+# Levantar la API
 cd services/credit-api
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```

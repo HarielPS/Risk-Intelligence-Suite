@@ -8,7 +8,6 @@ interface LetterResultPanelProps {
 }
 
 export function LetterResultPanel({ letter, loading }: LetterResultPanelProps) {
-  // 1) Estado de carga de la carta
   if (loading) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
@@ -31,7 +30,6 @@ export function LetterResultPanel({ letter, loading }: LetterResultPanelProps) {
     );
   }
 
-  // 2) Sin carta aún y sin carga activa
   if (!letter) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
@@ -41,7 +39,6 @@ export function LetterResultPanel({ letter, loading }: LetterResultPanelProps) {
     );
   }
 
-  // 3) Carta lista
   return (
     <div className="rounded-xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
       <h3 className="text-lg font-medium text-slate-900 mb-3">

@@ -10,10 +10,10 @@ export class Account {
   user: Types.ObjectId;
 
   @Prop({ type: Number, default: 0 })
-  currentAccountBalance: number; // cuenta corriente
+  currentAccountBalance: number;
 
   @Prop({ type: Number, default: 0 })
-  savingsAccountBalance: number; // cuenta de ahorros
+  savingsAccountBalance: number;
 }
 
 export const AccountSchema = SchemaFactory.createForClass(Account);

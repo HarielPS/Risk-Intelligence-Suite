@@ -51,18 +51,17 @@ export default function ClientePage() {
     setLetterLoading(false);
 
     try {
-      // 1) Crear solicitud de crédito (rápido)
+      // Crear solicitud de crédito 
       const response = await createCreditApplication(user.id, formValues);
       setResult(response);
 
-      // 2) Generar carta de explicabilidad (tarda más)
+      // Generar carta de explicabilidad
       try {
         setLetterLoading(true);
         const letterResponse = await generateCreditLetter(user.id, response.id);
         setLetter(letterResponse);
       } catch (err) {
         console.error("Error al generar carta de explicabilidad:", err);
-        // Si quieres diferenciar errores de carta del resto, podrías usar otro estado
         setErrorMsg(
           "La solicitud se procesó, pero hubo un error al generar la carta de explicabilidad."
         );
@@ -102,7 +101,7 @@ export default function ClientePage() {
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
         <header className="mb-2">
           <h1 className="text-2xl font-semibold text-slate-900">
-            Hola, {fullName} 👋
+            Hola, {fullName} !!
           </h1>
           <p className="text-sm text-slate-600">
             Bienvenido a tu panel de solicitud de crédito.

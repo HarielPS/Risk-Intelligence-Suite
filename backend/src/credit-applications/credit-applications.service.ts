@@ -123,26 +123,26 @@ export class CreditApplicationsService {
       
     // Payload esperado microservicio FastAPI
     const mlPayload = {
-      Status: laufkont,                        // antes: laufkont
-      Duration: dto.durationMonths,           // antes: laufzeit
-      CreditHistory: dto.creditHistory,       // moral
-      Purpose: dto.purpose,                   // verw
-      CreditAmount: dto.amount,               // hoehe
-      Savings: sparkont,                      // sparkont
-      EmploymentDuration: dto.employmentDuration, // beszeit
-      InstallmentRate: dto.installmentRate,   // rate
-      PersonalStatusSex: dto.personalStatusSex,   // famges
-      OtherDebtors: dto.otherDebtors,         // buerge
-      PresentResidence: dto.presentResidence, // wohnzeit
-      Property: dto.property,                 // verm
-      Age: age,                               // alter
-      OtherInstallmentPlans: dto.otherInstallmentPlans, // weitkred
-      Housing: dto.housing,                   // wohn
-      NumberExistingCredits: dto.numberCredits,     // bishkred
-      Job: dto.job,                           // beruf
-      PeopleLiable: dto.peopleLiable,         // pers
-      Telephone: dto.telephone,               // telef
-      ForeignWorker: dto.foreignWorker,       // gastarb
+      Status: laufkont,                        //  laufkont
+      Duration: dto.durationMonths,           //  laufzeit
+      CreditHistory: dto.creditHistory,       //  moral
+      Purpose: dto.purpose,                   //  verw
+      CreditAmount: dto.amount,               //  hoehe
+      Savings: sparkont,                      //  sparkont
+      EmploymentDuration: dto.employmentDuration, //  beszeit
+      InstallmentRate: dto.installmentRate,   //  rate
+      PersonalStatusSex: dto.personalStatusSex,   //  famges
+      OtherDebtors: dto.otherDebtors,         //  buerge
+      PresentResidence: dto.presentResidence, //  wohnzeit
+      Property: dto.property,                 //  verm
+      Age: age,                               //  alter
+      OtherInstallmentPlans: dto.otherInstallmentPlans, //  weitkred
+      Housing: dto.housing,                   //  wohn
+      NumberExistingCredits: dto.numberCredits,     //  bishkred
+      Job: dto.job,                           //  beruf
+      PeopleLiable: dto.peopleLiable,         //  pers
+      Telephone: dto.telephone,               //  telef
+      ForeignWorker: dto.foreignWorker,       //  gastarb
     };
 
 
@@ -236,19 +236,16 @@ async generateLetterForApplication(
   applicationId: string,
   userId: string,
 ): Promise<CreditLetter> {
-  // 1) Buscar la solicitud por ID
   const app = await this.creditAppModel.findById(applicationId).exec();
   if (!app) {
     throw new NotFoundException("Solicitud de crédito no encontrada");
   }
 
-  // 2) Buscar el usuario (para email, relación con client y cuenta)
   const user = await this.userModel.findById(userId).exec();
   if (!user) {
     throw new NotFoundException("Usuario no encontrado");
   }
 
-  // 3) Buscar la cuenta asociada (si quieres usar los saldos después)
   const account = await this.accountModel
     .findOne({ user: user._id })
     .exec();
@@ -257,7 +254,6 @@ async generateLetterForApplication(
     throw new NotFoundException("Cuenta asociada no encontrada");
   }
 
-  // 4) Buscar el cliente (aquí está name, nationalId, email, phone, income, status)
   const client = await this.clientModel
     .findOne({ email: user.email })
     .exec();
@@ -266,7 +262,7 @@ async generateLetterForApplication(
     throw new NotFoundException("Cliente asociado no encontrado");
   }
 
-  // 5) Armar el payload para el microservicio ml-letter
+  //Armar el payload para el microservicio ml-letter
   const mlLetterPayload: MlLetterPayload = {
     application: {
       id: app._id.toString(),
@@ -287,7 +283,6 @@ async generateLetterForApplication(
       status: client.status ?? "ACTIVE",
       createdAt: client.createdAt,
     },
-    // aquí luego puedes meter cosas del account si quieres
   };
 
   console.log(
@@ -295,7 +290,6 @@ async generateLetterForApplication(
     JSON.stringify(mlLetterPayload, null, 2),
   );
 
-  // 6) URL del microservicio de cartas 
   const mlLetterUrl =
     this.configService.get<string>("ML_LETTER_URL") ?? "";
 
@@ -305,20 +299,18 @@ async generateLetterForApplication(
     );
   }
 
-  // Función auxiliar: hace la llamada HTTP real
   const callLetterApi = async () => {
     const resp$ = this.http.post(mlLetterUrl, mlLetterPayload);
     return await firstValueFrom(resp$);
   };
 
-  // 7) Llamar al microservicio ml-letter con pequeño retry
+  // Llamar al microservicio ml-letter con retry
   try {
     let resp;
 
     try {
       resp = await callLetterApi();
     } catch (err: any) {
-      // Si es un ECONNREFUSED (cold start), esperamos 2s y reintentamos una vez
       const code = err?.code ?? err?.cause?.code;
       if (code === "ECONNREFUSED") {
         console.warn(
@@ -334,8 +326,6 @@ async generateLetterForApplication(
     const raw = resp.data as any;
     console.log("Respuesta de ml-letter:", JSON.stringify(raw, null, 2));
 
-    // 1) Si el microservicio ya manda bullets, los usamos.
-    //    Si no, construimos bullets a partir de positiveFactors / riskFactors
     let bullets: string[] = [];
 
     if (Array.isArray(raw.bullets) && raw.bullets.length > 0) {
@@ -354,7 +344,6 @@ async generateLetterForApplication(
       });
     }
 
-    // 2) Preferimos letterText; si no viene, usamos reason; si tampoco, fallback
     const letter: CreditLetter = {
       decision: raw.decision as ExplainabilityDecision,
       letterText:

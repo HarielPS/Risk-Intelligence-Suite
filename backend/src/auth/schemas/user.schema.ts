@@ -41,7 +41,7 @@ export class User {
   country: string;
 
   @Prop()
-  birthdate: string; // ISO string (YYYY-MM-DD)
+  birthdate: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

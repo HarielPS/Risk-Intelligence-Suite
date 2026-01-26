@@ -19,10 +19,10 @@ export class RiskAnalysis {
   age: number;
 
   @Prop({ required: true })
-  score: number; // probability_default
+  score: number;
 
   @Prop({ required: true })
-  label: RiskLabel; // risk_band
+  label: RiskLabel;
 
   @Prop({ default: 'credit_v1' })
   modelVersion: string;

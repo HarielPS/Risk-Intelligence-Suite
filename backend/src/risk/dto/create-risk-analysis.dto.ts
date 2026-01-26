@@ -14,15 +14,15 @@ export class CreateRiskAnalysisDto {
   // numeric_features
   @IsInt()
   @Min(1)
-  duration: number; // Duration
+  duration: number; 
 
   @IsNumber()
   @Min(1)
-  creditAmount: number; // CreditAmount
+  creditAmount: number; 
 
   @IsInt()
   @Min(18)
-  age: number; // Age
+  age: number; 
 
   // categorical_features
   @IsInt()

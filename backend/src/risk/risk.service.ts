@@ -56,7 +56,7 @@ export class RiskService {
       foreignWorker,
     } = dto;
 
-    // 1) Diccionario EXACTO que espera score_application (FastAPI)
+    // Diccionario que espera score_application (FastAPI)
     const payload = {
       Duration: duration,
       CreditAmount: creditAmount,
@@ -80,11 +80,11 @@ export class RiskService {
       ForeignWorker: foreignWorker,
     };
 
-    // 2) Llamar al microservicio Python
+    //  Llamar al microservicio Python
     const response$ = this.httpService.post<MlResponse>(this.mlUrl, payload);
     const { data: ml } = await firstValueFrom(response$);
 
-    // 3) Normalizar banda de riesgo
+    // Normalizar banda de riesgo
     const band = ml.risk_band.toUpperCase();
     let label: RiskLabel;
     if (band === 'LOW' || band === 'MEDIUM' || band === 'HIGH') {
@@ -98,7 +98,7 @@ export class RiskService {
           : 'HIGH';
     }
 
-    // 4) Guardar en Mongo
+    // Guardado en Mongo
     const created = new this.riskModel({
       client: new Types.ObjectId(clientId),
       duration,
